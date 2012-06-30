@@ -1,0 +1,77 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<script>
+var eightOfNine = [[0,0],[0,1/3],[0,2/3],[1/3,0],[1/3,2/3],[2/3,0],[2/3,1/3],[2/3,2/3]];
+var toPct = function(n) { return (100*n)+"%" };
+var totalFill = {x: toPct(0), y: toPct(0), width: toPct(1), height: toPct(1)};
+var mkElem = function(elem) { return document.createElementNS('http://www.w3.org/2000/svg', elem); };
+var setAttrs = function(elem, attrs) { for(var k in attrs) elem.setAttribute(k,attrs[k]); return elem; }
+var mkElemWithAttrs = function(elem, attrs) { return setAttrs(mkElem(elem), attrs); };
+var appendAll = function(elem, children) { children.forEach(function(c) { elem.appendChild(c) }); return elem; };
+var concatArrays = function(lst) { var r = []; lst.forEach(function(a) { r = r.concat(a) }); return r; };
+
+var eachk = function(lst,fk,k) { lst.length==0 ? k() : fk(lst[0], function() { eachk(lst.slice(1),fk,k) }) };
+
+function svgNestWrap(n) { return appendAll(mkElemWithAttrs("svg",totalFill),svgNest(n)) }
+
+function svgNest(n) {
+  return Math.max(n,0) == 0 ? [setAttrs(mkElemWithAttrs("rect",totalFill),{fill: "blue"})] :
+                              concatArrays(eightOfNine.map(function(xy) { return appendAll(mkElemWithAttrs("svg",{x: toPct(xy[0]), y: toPct(xy[1]), width: toPct(1/3), height: toPct(1/3)}),svgNest(n-1)); }));
+}
+
+function rectNestWrap(n) { return appendAll(mkElemWithAttrs("svg",totalFill), rectNest(n,0,0,1,1)); }
+
+function rectNest(n,x,y,w,h) {
+  return Math.max(n,0) == 0 ? [mkElemWithAttrs("rect", {x: toPct(x), y: toPct(y), width: toPct(w), height: toPct(h), fill: "black"})] :
+                              concatArrays(eightOfNine.map(function(xy) { return rectNest(n-1, (x+w*xy[0]), (y+h*xy[1]), w/3, h/3); }));
+}
+
+window.onload = function() {
+  var nh = document.getElementById("nest-holder");
+  var nhempty = function() { nh.removeChild(nh.childNodes[0]); };
+  document.getElementById("btn").onclick = function() {
+    nhempty();
+    var v = prompt("?");
+    nh.appendChild(Math.max(v,0) == 0 ? svgNestWrap(-v) : rectNestWrap(v));
+  };
+  eachk([1,2,3,4,5], function(i,k) {
+    nhempty();
+    setTimeout(function() {
+      var rStart = Date.now();
+      nh.appendChild(rectNestWrap(i));
+      setTimeout(function() {
+        var rEnd = Date.now();
+        setTimeout(function() {
+          nhempty();
+          setTimeout(function() {
+            var sStart = Date.now();
+            nh.appendChild(svgNestWrap(i));
+            setTimeout(function() {
+              var sEnd = Date.now();
+              setTimeout(function() {
+                var sTime = sEnd-sStart;
+                var rTime = rEnd-rStart;
+                var li = document.createElement("li");
+                li.innerHTML = sTime + "ms with nested svgs versus" + rTime + "ms, slowdown " + (sTime / rTime) + "x";
+                document.getElementById("timings").appendChild(li);
+                setTimeout(k,5000);
+              },0);
+            },0);
+          },0);
+        },2000);
+      },0);
+    },0);
+  }, function() {});
+}
+
+</script>
+<body>
+<ol id="timings"></ol>
+<button id="btn">positive for fast, negative for slow</button>
+<div>
+<svg id="nest-holder" xmlns="http://www.w3.org/2000/svg" width="729px" height="729px">
+</svg>
+</div>
+</body>
+</html>

@@ -53,7 +53,7 @@ window.onload = function() {
                 var sTime = sEnd-sStart;
                 var rTime = rEnd-rStart;
                 var li = document.createElement("li");
-                li.innerHTML = sTime + "ms with nested svgs versus" + rTime + "ms, slowdown " + (sTime / rTime) + "x";
+                li.innerHTML = sTime + "ms with nested svgs versus " + rTime + "ms, slowdown " + (sTime / rTime) + "x";
                 document.getElementById("timings").appendChild(li);
                 setTimeout(k,5000);
               },0);
